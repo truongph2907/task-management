@@ -17,7 +17,21 @@ import com.example.task_management.repository.TaskRepository;
 import com.example.task_management.repository.UserRepository;
 
 @Configuration
-public class DataInitializer {
+public class DataInitializer {    
+    void createUsers(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+        RoleEntity userRole = roleRepository.findByName("USER"); 
+
+        for (int i = 1; i <= 20; i++) {
+            String username = "user" + i;
+            userRepository.save(UserEntity.builder()
+                    .name("User " + i)
+                    .email(username + "@gmail.com")
+                    .username(username)
+                    .password(passwordEncoder.encode(username))
+                    .roles(Set.of(userRole))
+                    .build());
+        }
+    }
 
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository, RoleRepository roleRepository,
@@ -41,11 +55,11 @@ public class DataInitializer {
                     .email("admin@abc.com")
                     .username("admin")
                     .password(passwordEncoder.encode("admin"))
-                    .roles(Set.of(userRole, adminRole))
+                    .roles(Set.of(adminRole, userRole))
                     .build();
 
-            userRepository.save(user);
             userRepository.save(admin);
+            userRepository.save(user);
 
             taskRepository.save(TaskEntity.builder()
                     .name("display task")
@@ -64,6 +78,8 @@ public class DataInitializer {
                     .isDone(false)
                     .owner(admin)
                     .build());
+
+            createUsers(userRepository, roleRepository, passwordEncoder);
         };
     }
 }
