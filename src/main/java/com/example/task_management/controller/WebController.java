@@ -129,15 +129,14 @@ public class WebController {
     @GetMapping("/admin/manage_user")
     public String admin(Model model,
         @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "name") String sortField,
+        @RequestParam(defaultValue = "id") String sortField,
         @RequestParam(defaultValue = "asc") String sortDirection
     ) {
         // get user list
         // List<UserEntity> users = userRepository.findAll();
-        Page<UserEntity> users = userService.listAll(page, sortField, sortDirection);
-        
+        Page<UserEntity> pageData = userService.listAll(page, sortField, sortDirection);
 
-        model.addAttribute("users", users);
+        model.addAttribute("pageData", pageData);
         model.addAttribute("currentPage", page);
         model.addAttribute("sortField", sortField);
         model.addAttribute("sortDirection", sortDirection);

@@ -79,7 +79,6 @@
             </button>
         </div>
 
-        <!-- Users Table Container -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -94,8 +93,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800">
-                        <!-- Dynamic User Rows -->
-                        <tr th:each="user : ${users}" class="hover:bg-slate-800/30 transition-colors group">
+                        <tr th:each="user : ${pageData.getContent()}" class="hover:bg-slate-800/30 transition-colors group">
                             <td class="px-6 py-4">
                                 <div class="flex items-center space-x-3">
                                     <div
@@ -111,7 +109,6 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <!-- Enhanced Roles Container with wrap -->
                                 <div class="flex flex-wrap gap-2 max-w-xs sm:max-w-sm">
                                     <div th:each="role: ${user.getRoles()}">
                                         <span th:if="${role.getName() == 'ADMIN'}"
@@ -121,7 +118,6 @@
                                     </div>
                                 </div>
                             </td>
-
                             <td class="px-6 py-4 text-right space-x-1">
                                 <button
                                     class="p-2 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-all"><i
@@ -131,60 +127,73 @@
                                         class="fas fa-trash-alt"></i></button>
                             </td>
                         </tr>
-
                     </tbody>
                 </table>
             </div>
 
             <!-- Table Footer with Numbered Pagination -->
             <div class="px-6 py-4 bg-slate-800/30 border-t border-slate-800 flex items-center justify-between">
-                <span class="text-xs text-slate-500 font-medium tracking-wide">Showing 
-                    <span th:text="${@environment.getProperty('app.pagination.user.page-size') * users.getNumber() + 1}"></span>
+                <span class="text-xs text-slate-500 font-medium tracking-wide">
+                    Showing
+                    <span
+                        th:text="${#conversions.convert(@environment.getProperty('app.pagination.user.page-size'), 'java.lang.Integer') * pageData.getNumber() + 1}">1</span>
                     -
-                    <span th:text="${@environment.getProperty('app.pagination.user.page-size') * users.getNumber() + users.getSize()}"></span> 
-                    of 
-                    <span th:text="${users.getTotalElements()}"></span> users
+                    <span
+                        th:text="${#conversions.convert(@environment.getProperty('app.pagination.user.page-size'), 'java.lang.Integer') * pageData.getNumber() + pageData.getNumberOfElements()}">10</span>
+                    of
+                    <span th:text="${pageData.getTotalElements()}">48</span> users
                 </span>
 
                 <nav class="flex items-center space-x-1">
                     <!-- Prev Arrow -->
-                    <button th:disabled="${users.getNumber() == 0}"
-                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                    <a th:href="@{/admin/manage_user(page=${pageData.getNumber() + 1 - 1})}"
+                        th:classappend="${pageData.getNumber() == 0} ? 'pointer-events-none opacity-30' : ''"
+                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
                         <i class="fas fa-chevron-left text-[10px]"></i>
-                    </button>
+                    </a>
 
-                    <!-- Page zero -->
-                    <button th:if="${users.getNumber() - 1 > 1}"
-                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">0</button>
+                    <!-- Page zero link (if far away) -->
+                    <a th:if="${pageData.getNumber() - 3 + 1 > 0}" th:href="@{/admin/manage_user(page=1)}" th:text="1"
+                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
-                    <!-- Ellipsis -->
-                    <span th:if="${users.getNumber() - 1 > 1}" class="px-1 text-slate-600">...</span>
+                    <span th:if="${pageData.getNumber() + 1 > 4}" class="px-1 text-slate-600">...</span>
+
+                    <a th:if="${pageData.getNumber() - 2 + 1 > 0}" th:text="${pageData.getNumber() - 2 + 1}"
+                        th:href="@{/admin/manage_user(page=${pageData.getNumber() - 2 + 1})}"
+                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
                     <!-- Previous page -->
-                    <button th:if="${users.getNumber() > 0}" th:text="${users.getNumber() - 1}"
-                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">0</button>
+                    <a th:if="${pageData.getNumber() - 1 + 1 > 0}" 
+                        th:text="${pageData.getNumber() - 1 + 1}" th:href="@{/admin/manage_user(page=${pageData.getNumber() - 1 + 1})}"
+                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
-                    <!-- Current page -->
-                    <button th:text="${users.getNumber()}"
-                        class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-900/20">0</button>
+                    <!-- Current page (Active) -->
+                    <a href="#" th:text="${pageData.getNumber() + 1}"
+                        class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-900/20 pointer-events-none"></a>
 
                     <!-- Next page -->
-                    <button th:if="${users.getNumber() < users.getTotalPages()}" th:text="${users.getNumber() + 1}"
-                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">0</button>
+                    <a th:if="${pageData.getNumber() + 1 < pageData.getTotalPages()}"
+                        th:text="${pageData.getNumber() + 1 + 1}" th:href="@{/admin/manage_user(page=${pageData.getNumber() + 1 + 1})}"
+                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
-                    <!-- Ellipsis -->
-                    <span th:if="${users.getNumber() + 1 < users.getTotalPages()}" class="px-1 text-slate-600">...</span>
+                    <!-- Next page -->
+                    <a th:if="${pageData.getNumber() + 2 < pageData.getTotalPages()}" th:text="${pageData.getNumber() + 2 + 1}"
+                        th:href="@{/admin/manage_user(page=${pageData.getNumber() + 2 + 1})}"
+                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
+
+                    <span th:if="${pageData.getNumber() + 1 < pageData.getTotalPages() - 3}" class="px-1 text-slate-600">...</span>
 
                     <!-- Last page -->
-                    <button th:if="${users.getNumber() + 1 < users.getTotalPages()}" th:text="${users.getTotalPages()}"
-                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
-                        0</button>
+                    <a th:if="${pageData.getNumber() + 3 < pageData.getTotalPages()}"
+                        th:text="${pageData.getTotalPages()}" th:href="@{/admin/manage_user(page=${pageData.getTotalPages()})}"
+                        class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
                     <!-- Next Arrow -->
-                    <button th:disabled="${users.getNumber() == users.getTotalPages()}"
+                    <a  th:href="@{/admin/manage_user(page=${pageData.getNumber() + 1 + 1})}"
+                        th:classappend="${pageData.getNumber() + 1 >= pageData.getTotalPages()} ? 'pointer-events-none opacity-30' : ''"
                         class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
                         <i class="fas fa-chevron-right text-[10px]"></i>
-                    </button>
+                    </a>
                 </nav>
             </div>
         </div>
