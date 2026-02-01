@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -21,6 +22,7 @@ import com.example.task_management.entity.TaskEntity;
 import com.example.task_management.entity.UserEntity;
 import com.example.task_management.repository.TaskRepository;
 import com.example.task_management.repository.UserRepository;
+import com.example.task_management.service.UserService;
 
 import jakarta.validation.Valid;
 
@@ -32,6 +34,9 @@ public class WebController {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping({ "/", "/home" })
     public String home() {
@@ -122,11 +127,21 @@ public class WebController {
     }
 
     @GetMapping("/admin/manage_user")
-    public String admin(Model model) {
-
+    public String admin(Model model,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "name") String sortField,
+        @RequestParam(defaultValue = "asc") String sortDirection
+    ) {
         // get user list
-        List<UserEntity> users = userRepository.findAll();
+        // List<UserEntity> users = userRepository.findAll();
+        Page<UserEntity> users = userService.listAll(page, sortField, sortDirection);
+        
+
         model.addAttribute("users", users);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDirection", sortDirection);
+        model.addAttribute("reverseSortDirection", sortDirection.equals("asc") ? "desc" : "asc");
 
         return "manage_user";
     }
