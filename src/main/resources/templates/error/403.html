@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-slate-950 min-h-screen flex items-center justify-center p-6 text-slate-200 font-sans">
+
+    <div class="max-w-md w-full text-center">
+        <!-- Error Icon/Graphic -->
+        <div class="mb-8 relative inline-block">
+            <div
+                class="w-24 h-24 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                <i class="fas fa-hand-paper text-4xl text-amber-500"></i>
+            </div>
+            <!-- Decorative blur effect -->
+            <div class="absolute inset-0 bg-amber-500/20 blur-3xl -z-10 rounded-full"></div>
+        </div>
+
+        <!-- Error Content -->
+        <div class="space-y-4 mb-10">
+            <h1 class="text-6xl font-black text-white tracking-tighter">403</h1>
+            <h2 class="text-2xl font-bold text-white tracking-tight">Access Forbidden</h2>
+            <p class="text-slate-400 text-lg leading-relaxed">
+                You don't have permission to access this resource. Please check your credentials or contact your
+                administrator.
+            </p>
+        </div>
+
+        <!-- Navigation Actions -->
+        <div class="flex flex-col sm:flex-row gap-4">
+            <a th:href="@{/home}"
+                class="flex-1 py-3 px-6 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-900/20 hover:bg-indigo-500 transition-all active:scale-[0.98] flex items-center justify-center space-x-2">
+                <i class="fas fa-home text-sm"></i>
+                <span>Back to Home</span>
+            </a>
+
+            <button onclick="window.history.back()"
+                class="flex-1 py-3 px-6 bg-slate-900 border border-slate-800 text-slate-300 font-semibold rounded-xl hover:bg-slate-800 hover:border-slate-700 transition-all active:scale-[0.98] flex items-center justify-center space-x-2">
+                <i class="fas fa-arrow-left text-sm"></i>
+                <span>Go Back</span>
+            </button>
+        </div>
+
+        <!-- Support Link -->
+        <p class="mt-12 text-sm text-slate-500">
+            Need help? <a href="#"
+                class="text-indigo-400 hover:text-indigo-300 font-medium underline underline-offset-4">Contact support
+                team</a>
+        </p>
+    </div>
+
+</body>
+
+</html>

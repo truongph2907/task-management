@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Modal Toggle Logic */
+        #modal-toggle:checked~#task-modal {
+            display: flex;
+        }
+
+        #modal-toggle:checked~body {
+            overflow: hidden;
+        }
+
+        /* Custom styling to ensure the native picker icon doesn't overlap our icon */
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            background: transparent;
+            bottom: 0;
+            color: transparent;
+            cursor: pointer;
+            height: auto;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: auto;
+        }
+
+        /* Custom Checkbox Styling */
+        .task-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid #6366f1;
+            border-radius: 0.375rem;
+            background-color: transparent;
+            display: inline-grid;
+            place-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .task-checkbox::before {
+            content: "\f00c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 0.75rem;
+            color: white;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+        }
+
+        .task-checkbox:checked {
+            background-color: #6366f1;
+            border-color: #6366f1;
+        }
+
+        .task-checkbox:checked::before {
+            transform: scale(1);
+        }
+
+        .task-checkbox:hover {
+            border-color: #818cf8;
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+
+        /* Task Completion Effects */
+        .task-checkbox:checked~.task-content h3 {
+            text-decoration: line-through;
+            color: #64748b;
+            /* slate-500 */
+            transition: all 0.3s ease;
+        }
+
+        .task-checkbox:checked~.task-content .preview-text {
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        /* Smooth collapse animation classes */
+        .details-collapsed {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0, 1, 0, 1);
+        }
+
+        .details-expanded {
+            max-height: 500px;
+            opacity: 1;
+            transition: all 0.3s cubic-bezier(1, 0, 1, 0);
+        }
+
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-950 min-h-screen text-slate-200">
+    <!-- Hidden checkbox to control modal state -->
+    <input th:if="${#fields.hasErrors('newTask.*')}" type="checkbox" id="modal-toggle" class="hidden" checked>
+    <input th:unless="${#fields.hasErrors('newTask.*')}" type="checkbox" id="modal-toggle" class="hidden">
+
+    <!-- Header / Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center text-white">
+                    <i class="fas fa-bolt text-sm"></i>
+                </div>
+                <span class="font-bold text-white tracking-tight">Task Management</span>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <span class="text-slate-400 text-sm hidden lg:inline">
+                    Hello, <span th:text="${user.getName()}" class="text-white font-semibold">...</span>
+                </span>
+
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/manage_user}"
+                    class="flex items-center space-x-2 px-4 py-2 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 rounded-lg transition-all text-sm font-medium group">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Manage User</span>
+                </a>
+
+                <form th:action="@{/logout}" method="POST" class="inline">
+                    <button type="submit"
+                        class="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-red-900/30 hover:text-red-400 border border-slate-700 rounded-lg transition-all text-sm font-medium group cursor-pointer">
+                        <i class="fas fa-sign-out-alt text-slate-500 group-hover:text-red-400"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto py-12 px-6">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-white">Your Tasks</h2>
+                <p class="text-slate-500 text-sm">You have <span th:text="${#lists.size(tasks)}">0</span> tasks pending.
+                </p>
+            </div>
+            <!-- Open Modal Button -->
+            <label for="modal-toggle"
+                class="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors shadow-lg shadow-indigo-900/20 cursor-pointer">
+                <i class="fas fa-plus"></i>
+            </label>
+        </div>
+
+        <!-- Task List -->
+        <div class="space-y-3">
+            <div th:each="task : ${tasks}"
+                class="group flex flex-col bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition-all overflow-hidden">
+
+                <!-- Task Primary Row -->
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center space-x-4 flex-1">
+                        <form th:object="${task}" th:action="@{/dashboard/task/update}" method="post"
+                            class="flex items-center space-x-4 task-item-form">
+                            <input type="hidden" name="id" th:value="${task.id}">
+                            <input type="checkbox" class="task-checkbox auto-submit-checkbox" name="isDone"
+                                th:id="${'task-' + task.id}" th:checked="${task.isDone}">
+
+                            <div class="task-content">
+                                <h3 th:text="${task.name}" class="font-medium text-slate-200">Task Name</h3>
+                                <p class="text-xs text-slate-500 preview-text">
+                                    Due: <span
+                                        th:text="${#temporals.format(task.dueDate, 'dd-MM-yyyy HH:mm')}">Date</span>
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <!-- Priority Tags -->
+                        <span
+                            th:if="${task.priority == T(com.example.task_management.entity.TaskEntity.Priority).HIGH}"
+                            class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 rounded">High</span>
+                        <span
+                            th:if="${task.priority == T(com.example.task_management.entity.TaskEntity.Priority).MEDIUM}"
+                            class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400 rounded">Medium</span>
+                        <span
+                            th:if="${task.priority == T(com.example.task_management.entity.TaskEntity.Priority).LOW}"
+                            class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 rounded">Low</span>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center border-l border-slate-800 ml-2 pl-2 space-x-1">
+                            <!-- Toggle Button -->
+                            <button type="button"
+                                class="p-2 text-slate-500 hover:text-white transition-all toggle-details-btn"
+                                th:data-target="${'details-' + task.id}">
+                                <i class="fas fa-chevron-down text-xs transition-transform duration-300"></i>
+                            </button>
+
+                            <!-- Delete Button -->
+                            <form th:action="@{'/dashboard/task/delete/' + ${task.id}}" method="post" class="inline">
+                                <button type="submit"
+                                    class="p-2 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                                    onclick="return confirm('Are you sure you want to delete this task?')">
+                                    <i class="far fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expanded Detail Section -->
+                <div th:id="${'details-' + task.id}" class="details-collapsed bg-slate-950/40 px-12 pb-4">
+                    <div class="pt-2 border-t border-slate-800/50">
+                        <h4 class="text-[10px] uppercase font-bold text-slate-600 tracking-widest mb-2">Description</h4>
+                        <p th:text="${task.description}" class="text-sm text-slate-400 leading-relaxed italic">
+                            No description provided for this task.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Task Creation Modal -->
+    <div id="task-modal"
+        class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl p-8 relative">
+            <label for="modal-toggle"
+                class="absolute top-4 right-4 text-slate-500 hover:text-white cursor-pointer transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </label>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-white">Add New Task</h3>
+                <p class="text-slate-400 text-sm mt-1">Plan your next milestone.</p>
+            </div>
+
+            <form id="addTaskForm" th:action="@{/dashboard/task}" th:object="${newTask}" method="POST"
+                class="space-y-5">
+                <!-- Task Name -->
+                <div>
+                    <label for="taskName" class="block text-sm font-medium text-slate-300 mb-1.5">Task Name</label>
+                    <input type="text" required th:field="*{name}"
+                        class="block w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                        placeholder="e.g. Design UI Mockups">
+                    <p th:if="${#fields.hasErrors('name')}" th:errors="*{name}"
+                        class="mt-1.5 text-xs text-red-400 flex items-center space-x-1">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Validation error</span>
+                    </p>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-slate-300 mb-1.5">Description</label>
+                    <textarea rows="3" th:field="*{description}"
+                        class="block w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                        placeholder="Provide some context..."></textarea>
+                    <p th:if="${#fields.hasErrors('description')}" th:errors="*{description}"
+                        class="mt-1.5 text-xs text-red-400 flex items-center space-x-1">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Validation error</span>
+                    </p>
+                </div>
+
+                <!-- Due Date -->
+                <div>
+                    <label for="dueDate" class="block text-sm font-medium text-slate-300 mb-1.5">Due Date & Time</label>
+                    <div class="relative">
+                        <span
+                            class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 pointer-events-none">
+                            <i class="fas fa-calendar-alt text-sm mr-2"></i>
+                            <span class="text-slate-700">|</span>
+                            <i class="fas fa-clock text-sm ml-2"></i>
+                        </span>
+                        <!-- Visible input (not bound to field) -->
+                        <input type="datetime-local" id="dueDateField" required
+                            class="block w-full pl-20 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+
+                        <!-- Hidden input (actually bound to the DTO field) -->
+                        <input type="hidden" th:field="*{dueDate}" id="hiddenDueDate">
+                    </div>
+                    <p th:if="${#fields.hasErrors('dueDate')}" th:errors="*{dueDate}"
+                        class="mt-1.5 text-xs text-red-400 flex items-center space-x-1">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Validation error</span>
+                    </p>
+                </div>
+
+                <!-- Priority -->
+                <div>
+                    <label for="priority" class="block text-sm font-medium text-slate-300 mb-1.5">Priority</label>
+                    <select th:field="*{priority}"
+                        class="block w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none">
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM" selected>Medium</option>
+                        <option value="HIGH">High</option>
+                    </select>
+                    <p th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"
+                        class="mt-1.5 text-xs text-red-400 flex items-center space-x-1">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Validation error</span>
+                    </p>
+                </div>
+
+                <div class="flex space-x-3 pt-2">
+                    <label for="modal-toggle"
+                        class="flex-1 py-3 bg-slate-800 text-slate-300 text-center font-bold rounded-xl hover:bg-slate-700 cursor-pointer transition-all">
+                        Cancel
+                    </label>
+                    <button type="submit"
+                        class="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-900/20 hover:bg-indigo-500 transition-all">
+                        Save Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Run on page load
+        window.addEventListener('load', function () {
+            const datePicker = document.getElementById('dueDateField');
+            const hiddenInput = document.getElementById('hiddenDueDate');
+
+            if (hiddenInput && hiddenInput.value && datePicker) {
+                const rawValue = hiddenInput.value;
+                try {
+                    const dateObj = new Date(rawValue);
+                    const splitIdx = rawValue.lastIndexOf('+') > -1 ? rawValue.lastIndexOf('+') : rawValue.lastIndexOf('-');
+                    if (splitIdx > 10) {
+                        datePicker.value = rawValue.substring(0, splitIdx);
+                    } else {
+                        datePicker.value = rawValue;
+                    }
+                } catch (e) {
+                    console.error("Failed to parse date:", rawValue);
+                }
+            }
+
+            // --- Auto-Submit Checkbox Behavior ---
+            document.querySelectorAll('.auto-submit-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    this.closest('form').submit();
+                });
+            });
+
+            // --- Toggle Task Details ---
+            document.querySelectorAll('.toggle-details-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const targetId = this.getAttribute('data-target');
+                    const detailsDiv = document.getElementById(targetId);
+                    const icon = this.querySelector('i');
+
+                    if (detailsDiv.classList.contains('details-collapsed')) {
+                        detailsDiv.classList.remove('details-collapsed');
+                        detailsDiv.classList.add('details-expanded');
+                        icon.classList.add('rotate-180');
+                    } else {
+                        detailsDiv.classList.add('details-collapsed');
+                        detailsDiv.classList.remove('details-expanded');
+                        icon.classList.remove('rotate-180');
+                    }
+                });
+            });
+        });
+
+        document.getElementById('addTaskForm').addEventListener('submit', function (e) {
+            const dateInput = document.getElementById('dueDateField');
+            const hiddenInput = document.getElementById('hiddenDueDate');
+
+            if (dateInput && dateInput.value) {
+                const now = new Date();
+                const offsetMinutes = -now.getTimezoneOffset();
+                const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+                const remainingMinutes = Math.abs(offsetMinutes) % 60;
+                const sign = offsetMinutes >= 0 ? "+" : "-";
+
+                const formattedOffset = sign +
+                    String(offsetHours).padStart(2, '0') + ":" +
+                    String(remainingMinutes).padStart(2, '0');
+
+                hiddenInput.value = dateInput.value + formattedOffset;
+            }
+        });
+    </script>
+</body>
+
+</html>
