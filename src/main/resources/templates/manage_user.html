@@ -69,7 +69,7 @@
                         <tr class="bg-slate-800/50 border-b border-slate-800">
                             <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">User Info
                             </th>
-                            <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Role</th>
+                            <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Roles</th>
                             <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Status</th>
                             <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-400">Last Active
                             </th>
@@ -78,7 +78,37 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800">
-                        <!-- User Row 1 -->
+                        
+                        <tr th:each="user, iterStat : ${users}" class="hover:bg-slate-800/30 transition-colors group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-3">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold border border-indigo-500/20">
+                                        JD
+                                    </div>
+                                    <div>
+                                        <div th:text="${user.getName()}" class="text-sm font-semibold text-white">John Doe</div>
+                                        <div th:text="${user.getEmail()}" class="text-xs text-slate-500">john.doe@example.com</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 rounded-md">Administrator</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-1.5">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                    <span class="text-xs text-slate-300">Active</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-xs text-slate-500">2 mins ago</td>
+                            <td class="px-6 py-4 text-right space-x-2">
+                                <button class="p-2 text-slate-500 hover:text-white transition-colors"><i class="fas fa-edit"></i></button>
+                                <button class="p-2 text-slate-500 hover:text-red-400 transition-colors"><i
+                                        class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                        
                         <tr class="hover:bg-slate-800/30 transition-colors group">
                             <td class="px-6 py-4">
                                 <div class="flex items-center space-x-3">

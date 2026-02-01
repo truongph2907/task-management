@@ -41,7 +41,7 @@ public class DataInitializer {
                     .email("admin@abc.com")
                     .username("admin")
                     .password(passwordEncoder.encode("admin"))
-                    .roles(Set.of(userRole, adminRole))
+                    .roles(Set.of(adminRole, userRole))
                     .build();
 
             userRepository.save(user);

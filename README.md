@@ -1,4 +1,4 @@
-# Smart Work Management
+# Task Management
 
 Lightweight Spring Boot application for managing tasks and users with OAuth2 login (Google) and an in-memory H2 database for development.
 

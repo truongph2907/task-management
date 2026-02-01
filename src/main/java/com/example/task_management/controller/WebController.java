@@ -122,7 +122,12 @@ public class WebController {
     }
 
     @GetMapping("/admin/manage_user")
-    public String admin() {
+    public String admin(Model model) {
+
+        // get user list
+        List<UserEntity> users = userRepository.findAll();
+        model.addAttribute("users", users);
+
         return "manage_user";
     }
 }
