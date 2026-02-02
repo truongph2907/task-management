@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.task_management.DTO.CustomUserPrincipal;
 import com.example.task_management.DTO.Task;
@@ -128,10 +129,9 @@ public class WebController {
 
     @GetMapping("/admin/manage_user")
     public String admin(Model model,
-        @RequestParam(defaultValue = "1") int page,
-        @RequestParam(defaultValue = "id") String sortField,
-        @RequestParam(defaultValue = "asc") String sortDirection
-    ) {
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "asc") String sortDirection) {
         // get user list
         // List<UserEntity> users = userRepository.findAll();
         Page<UserEntity> pageData = userService.listAll(page, sortField, sortDirection);
@@ -143,5 +143,27 @@ public class WebController {
         model.addAttribute("reverseSortDirection", sortDirection.equals("asc") ? "desc" : "asc");
 
         return "manage_user";
+    }
+
+    @PostMapping("/admin/manage_user/delete/{id}")
+    public String deleteUser(@CurrentUser CustomUserPrincipal currentUser, Model model, RedirectAttributes ra,
+            @PathVariable("id") Long id) {
+
+        Optional<UserEntity> entity = userRepository.findById(id);
+        if (entity.isPresent()) {
+            UserEntity userEntity = entity.get();
+            if (userService.userHasRole(userEntity, "ADMIN")) {
+                // can not delete an admin
+                ra.addFlashAttribute("errorMessage", "You cannot delete an Administrator account");
+                return "redirect:/admin/manage_user";
+            }
+            userRepository.delete(userEntity);
+            ra.addFlashAttribute("successMessage", "User " + userEntity.getName() + " is deleted.");
+            return "redirect:/admin/manage_user";
+        } else {
+            // throw user not found exception
+            ra.addFlashAttribute("errorMessage", "User not found.");
+            return "redirect:/admin/manage_user";
+        }
     }
 }
