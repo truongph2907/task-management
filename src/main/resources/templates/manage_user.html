@@ -26,6 +26,25 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #334155;
         }
+
+        /* Fade out animation for flash messages */
+        .fade-out {
+            animation: fadeOut 0.5s ease-out forwards;
+            animation-delay: 5s;
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+                visibility: hidden;
+            }
+        }
     </style>
 </head>
 
@@ -67,6 +86,40 @@
 
     <!-- Main Content -->
     <main class="max-w-6xl mx-auto py-12 px-6">
+
+        <!-- FLASH MESSAGES AREA -->
+        <div class="mb-6 space-y-3">
+            <!-- Success Message -->
+            <div th:if="${successMessage}"
+                class="fade-out flex items-center justify-between p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 shadow-lg shadow-emerald-950/20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                        <i class="fas fa-check text-xs"></i>
+                    </div>
+                    <p class="text-sm font-medium" th:text="${successMessage}">User updated successfully!</p>
+                </div>
+                <button onclick="this.parentElement.remove()"
+                    class="text-emerald-500/50 hover:text-emerald-400 transition-colors">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${errorMessage}"
+                class="fade-out flex items-center justify-between p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 shadow-lg shadow-red-950/20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-xs"></i>
+                    </div>
+                    <p class="text-sm font-medium" th:text="${errorMessage}">Failed to delete user.</p>
+                </div>
+                <button onclick="this.parentElement.remove()"
+                    class="text-red-500/50 hover:text-red-400 transition-colors">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+        </div>
+
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
                 <h2 class="text-2xl font-bold text-white">User Management</h2>
@@ -93,7 +146,8 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800">
-                        <tr th:each="user : ${pageData.getContent()}" class="hover:bg-slate-800/30 transition-colors group">
+                        <tr th:each="user : ${pageData.getContent()}"
+                            class="hover:bg-slate-800/30 transition-colors group">
                             <td class="px-6 py-4">
                                 <div class="flex items-center space-x-3">
                                     <div
@@ -122,9 +176,14 @@
                                 <button
                                     class="p-2 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-all"><i
                                         class="fas fa-edit"></i></button>
-                                <button
-                                    class="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"><i
-                                        class="fas fa-trash-alt"></i></button>
+
+                                <form th:action="@{/admin/manage_user/delete/{id}(id=${user.getId()})}" method="POST" class="inline"
+                                    th:onsubmit="return confirm('Are you sure you want to delete user: ' + [[${user.name}]] + '?');">
+                                    <button type="submit"
+                                        class="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all cursor-pointer">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     </tbody>
@@ -152,44 +211,47 @@
                         <i class="fas fa-chevron-left text-[10px]"></i>
                     </a>
 
-                    <!-- Page zero link (if far away) -->
+                    <!-- Page zero link -->
                     <a th:if="${pageData.getNumber() - 3 + 1 > 0}" th:href="@{/admin/manage_user(page=1)}" th:text="1"
                         class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
                     <span th:if="${pageData.getNumber() + 1 > 4}" class="px-1 text-slate-600">...</span>
 
+                    <!-- Pages around current -->
                     <a th:if="${pageData.getNumber() - 2 + 1 > 0}" th:text="${pageData.getNumber() - 2 + 1}"
                         th:href="@{/admin/manage_user(page=${pageData.getNumber() - 2 + 1})}"
                         class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
-                    <!-- Previous page -->
-                    <a th:if="${pageData.getNumber() - 1 + 1 > 0}" 
-                        th:text="${pageData.getNumber() - 1 + 1}" th:href="@{/admin/manage_user(page=${pageData.getNumber() - 1 + 1})}"
+                    <a th:if="${pageData.getNumber() - 1 + 1 > 0}" th:text="${pageData.getNumber() - 1 + 1}"
+                        th:href="@{/admin/manage_user(page=${pageData.getNumber() - 1 + 1})}"
                         class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
                     <!-- Current page (Active) -->
                     <a href="#" th:text="${pageData.getNumber() + 1}"
                         class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-indigo-900/20 pointer-events-none"></a>
 
-                    <!-- Next page -->
+                    <!-- Next pages -->
                     <a th:if="${pageData.getNumber() + 1 < pageData.getTotalPages()}"
-                        th:text="${pageData.getNumber() + 1 + 1}" th:href="@{/admin/manage_user(page=${pageData.getNumber() + 1 + 1})}"
+                        th:text="${pageData.getNumber() + 1 + 1}"
+                        th:href="@{/admin/manage_user(page=${pageData.getNumber() + 1 + 1})}"
                         class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
-                    <!-- Next page -->
-                    <a th:if="${pageData.getNumber() + 2 < pageData.getTotalPages()}" th:text="${pageData.getNumber() + 2 + 1}"
+                    <a th:if="${pageData.getNumber() + 2 < pageData.getTotalPages()}"
+                        th:text="${pageData.getNumber() + 2 + 1}"
                         th:href="@{/admin/manage_user(page=${pageData.getNumber() + 2 + 1})}"
                         class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
-                    <span th:if="${pageData.getNumber() + 1 < pageData.getTotalPages() - 3}" class="px-1 text-slate-600">...</span>
+                    <span th:if="${pageData.getNumber() + 1 < pageData.getTotalPages() - 3}"
+                        class="px-1 text-slate-600">...</span>
 
                     <!-- Last page -->
                     <a th:if="${pageData.getNumber() + 3 < pageData.getTotalPages()}"
-                        th:text="${pageData.getTotalPages()}" th:href="@{/admin/manage_user(page=${pageData.getTotalPages()})}"
+                        th:text="${pageData.getTotalPages()}"
+                        th:href="@{/admin/manage_user(page=${pageData.getTotalPages()})}"
                         class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"></a>
 
                     <!-- Next Arrow -->
-                    <a  th:href="@{/admin/manage_user(page=${pageData.getNumber() + 1 + 1})}"
+                    <a th:href="@{/admin/manage_user(page=${pageData.getNumber() + 1 + 1})}"
                         th:classappend="${pageData.getNumber() + 1 >= pageData.getTotalPages()} ? 'pointer-events-none opacity-30' : ''"
                         class="w-8 h-8 flex items-center justify-center bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
                         <i class="fas fa-chevron-right text-[10px]"></i>
